@@ -9,8 +9,7 @@ class Server:
     def __init__(self, port, datacenters, db_name):
         self.HOST = "127.0.0.1"
         self.PORT = port 
-        #self.clients = {}
-        #Self.storage = {'' : None} 
+        self.clients = {}
         self.connect_to_database(db_name)
         print(f"Connected to database {self.db_name} for Server {self.PORT}")
         self.add_datacenters(datacenters)
@@ -27,7 +26,6 @@ class Server:
         try:
             self.db_cursor.execute("INSERT INTO dependencies (dependency_key) VALUES (%s)", (dependency_key,))
             self.db_connection.commit()
-            print(f'Stored dependency: {dependency_key}')
         except mysql.connector.Error as err:
             print(f'Error storing dependency: {err}')
     
@@ -41,7 +39,6 @@ class Server:
 
             cursor.execute("INSERT INTO messages (dependency_key, content) VALUES (%s, %s)", (key, value))
             connection.commit()
-            print(f'Stored message - key: {key}, value: {value}')
 
         except mysql.connector.Error as err:
             print(f'Error in storing message: {err}')
@@ -59,10 +56,8 @@ class Server:
 
             self.db_cursor.execute("SELECT dependency_key FROM dependencies")
             dependencies = [row[0] for row in self.db_cursor.fetchall()]
-            print(f'Retrieved dependencies: {dependencies}')
             return dependencies
         except mysql.connector.Error as err:
-            print(f'Error retrieving dependencies: {err}')
             return []
 
 
@@ -73,7 +68,6 @@ class Server:
                 "SELECT 1 FROM dependencies WHERE dependency_key = %s", (dependency_key,)
             )
             exists = self.db_cursor.fetchone() is not None
-            print(f'Dependency {dependency_key} exists: {exists}')
             return exists
         except mysql.connector.Error as err:
             print(f'Error checking dependency: {err}')
@@ -86,7 +80,6 @@ class Server:
             for dc_port in datacenters:
                 self.db_cursor.execute(insert_query, (dc_port,))
             self.db_connection.commit()
-            print(f'\n{self.db_name} stored all datacenter ports\n')
         except mysql.connector.Error as err:
             print(f'\nError storing datacenter ports\n')
 
@@ -196,21 +189,17 @@ class Server:
 
 
     def RegisterClient(self, client_port):
-        pass
-        """
         if client_port not in self.clients:
             self.clients[client_port] = {}
         else:
             print("ERROR: CLIENT ALREADY REGISTERED")
         
-        """
 
 
     def writeToStorage(self, message, replicate=True, delay=False):
         # Write to the dictionary in memory
         key, value = message.split(',')
         print(f'\nkey: {key}\nvalue: {value}\n')
-        #self.storage[key] = value
         self.store_message(key, value)
 
         message_with_dep = f"{message}-{self.get_all_dependencies()}"
